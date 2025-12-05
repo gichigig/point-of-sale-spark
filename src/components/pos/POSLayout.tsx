@@ -4,14 +4,17 @@ import { categories, products } from "@/data/products";
 import { CategoryTabs } from "./CategoryTabs";
 import { ProductGrid } from "./ProductGrid";
 import { Cart } from "./Cart";
+import { BarcodeScanner } from "./BarcodeScanner";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Clock, User } from "lucide-react";
+import { Search, Clock, User, ScanBarcode } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export function POSLayout() {
   const [activeCategory, setActiveCategory] = useState("all");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [scannerOpen, setScannerOpen] = useState(false);
   const { toast } = useToast();
 
   const filteredProducts = useMemo(() => {
@@ -48,6 +51,20 @@ export function POSLayout() {
       description: `${product.name} - $${product.price.toFixed(2)}`,
       duration: 1500,
     });
+  };
+
+  const handleBarcodeScan = (barcode: string) => {
+    const product = products.find((p) => p.barcode === barcode);
+    if (product) {
+      addToCart(product);
+    } else {
+      toast({
+        title: "Product not found",
+        description: `No product found with barcode: ${barcode}`,
+        variant: "destructive",
+        duration: 2000,
+      });
+    }
   };
 
   const updateQuantity = (id: string, quantity: number) => {
@@ -115,14 +132,23 @@ export function POSLayout() {
         <div className="flex-1 flex flex-col p-6 overflow-hidden">
           {/* Search & Categories */}
           <div className="space-y-4 mb-6">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Search products..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-secondary border-border/50 focus:border-primary"
-              />
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search products..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 bg-secondary border-border/50 focus:border-primary"
+                />
+              </div>
+              <Button
+                onClick={() => setScannerOpen(true)}
+                className="px-4"
+                variant="outline"
+              >
+                <ScanBarcode className="w-5 h-5" />
+              </Button>
             </div>
             <CategoryTabs
               categories={categories}
@@ -148,6 +174,12 @@ export function POSLayout() {
           />
         </div>
       </div>
+
+      <BarcodeScanner
+        open={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        onScan={handleBarcodeScan}
+      />
     </div>
   );
 }
