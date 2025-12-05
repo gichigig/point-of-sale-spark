@@ -5,8 +5,10 @@ import { CategoryTabs } from "./CategoryTabs";
 import { ProductGrid } from "./ProductGrid";
 import { Cart } from "./Cart";
 import { BarcodeScanner } from "./BarcodeScanner";
+import { RemoteScannerDialog } from "./RemoteScannerDialog";
+import { useScannerSession } from "@/hooks/useScannerSession";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Clock, User, ScanBarcode } from "lucide-react";
+import { Search, Clock, User, ScanBarcode, Smartphone } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -15,7 +17,30 @@ export function POSLayout() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [remoteDialogOpen, setRemoteDialogOpen] = useState(false);
   const { toast } = useToast();
+
+  const handleBarcodeScan = (barcode: string) => {
+    const product = products.find((p) => p.barcode === barcode);
+    if (product) {
+      addToCart(product);
+    } else {
+      toast({
+        title: "Product not found",
+        description: `No product found with barcode: ${barcode}`,
+        variant: "destructive",
+        duration: 2000,
+      });
+    }
+  };
+
+  const {
+    sessionCode,
+    connectedDevices,
+    startSession,
+    endSession,
+    isActive: isSessionActive,
+  } = useScannerSession(handleBarcodeScan);
 
   const filteredProducts = useMemo(() => {
     let filtered = products;
@@ -51,20 +76,6 @@ export function POSLayout() {
       description: `${product.name} - $${product.price.toFixed(2)}`,
       duration: 1500,
     });
-  };
-
-  const handleBarcodeScan = (barcode: string) => {
-    const product = products.find((p) => p.barcode === barcode);
-    if (product) {
-      addToCart(product);
-    } else {
-      toast({
-        title: "Product not found",
-        description: `No product found with barcode: ${barcode}`,
-        variant: "destructive",
-        duration: 2000,
-      });
-    }
   };
 
   const updateQuantity = (id: string, quantity: number) => {
@@ -149,6 +160,16 @@ export function POSLayout() {
               >
                 <ScanBarcode className="w-5 h-5" />
               </Button>
+              <Button
+                onClick={() => setRemoteDialogOpen(true)}
+                className="px-4"
+                variant={isSessionActive ? "default" : "outline"}
+              >
+                <Smartphone className="w-5 h-5" />
+                {isSessionActive && connectedDevices > 0 && (
+                  <span className="ml-1 text-xs">{connectedDevices}</span>
+                )}
+              </Button>
             </div>
             <CategoryTabs
               categories={categories}
@@ -179,6 +200,16 @@ export function POSLayout() {
         open={scannerOpen}
         onClose={() => setScannerOpen(false)}
         onScan={handleBarcodeScan}
+      />
+
+      <RemoteScannerDialog
+        open={remoteDialogOpen}
+        onClose={() => setRemoteDialogOpen(false)}
+        sessionCode={sessionCode}
+        connectedDevices={connectedDevices}
+        isActive={isSessionActive}
+        onStartSession={startSession}
+        onEndSession={endSession}
       />
     </div>
   );
