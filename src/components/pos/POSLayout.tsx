@@ -1,12 +1,14 @@
 import { useState, useMemo } from "react";
 import { Product, CartItem } from "@/types/pos";
-import { categories, products } from "@/data/products";
+import { categories } from "@/data/products";
 import { CategoryTabs } from "./CategoryTabs";
 import { ProductGrid } from "./ProductGrid";
 import { Cart } from "./Cart";
 import { BarcodeScanner } from "./BarcodeScanner";
 import { RemoteScannerDialog } from "./RemoteScannerDialog";
+import { EditBarcodeDialog } from "./EditBarcodeDialog";
 import { useScannerSession } from "@/hooks/useScannerSession";
+import { useProducts } from "@/hooks/useProducts";
 import { useToast } from "@/hooks/use-toast";
 import { Search, Clock, User, ScanBarcode, Smartphone } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -18,7 +20,10 @@ export function POSLayout() {
   const [searchQuery, setSearchQuery] = useState("");
   const [scannerOpen, setScannerOpen] = useState(false);
   const [remoteDialogOpen, setRemoteDialogOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const { toast } = useToast();
+  
+  const { products, loading, updateProductBarcode } = useProducts();
 
   const handleBarcodeScan = (barcode: string) => {
     const product = products.find((p) => p.barcode === barcode);
@@ -56,7 +61,7 @@ export function POSLayout() {
     }
     
     return filtered;
-  }, [activeCategory, searchQuery]);
+  }, [activeCategory, searchQuery, products]);
 
   const addToCart = (product: Product) => {
     setCart((prev) => {
@@ -180,7 +185,17 @@ export function POSLayout() {
 
           {/* Products */}
           <div className="flex-1 overflow-auto">
-            <ProductGrid products={filteredProducts} onAddToCart={addToCart} />
+            {loading ? (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-muted-foreground">Loading products...</p>
+              </div>
+            ) : (
+              <ProductGrid
+                products={filteredProducts}
+                onAddToCart={addToCart}
+                onEditBarcode={setEditingProduct}
+              />
+            )}
           </div>
         </div>
 
@@ -210,6 +225,13 @@ export function POSLayout() {
         isActive={isSessionActive}
         onStartSession={startSession}
         onEndSession={endSession}
+      />
+
+      <EditBarcodeDialog
+        product={editingProduct}
+        open={!!editingProduct}
+        onClose={() => setEditingProduct(null)}
+        onSave={updateProductBarcode}
       />
     </div>
   );

@@ -1,13 +1,19 @@
 import { Product } from "@/types/pos";
 import { cn } from "@/lib/utils";
-import { Plus } from "lucide-react";
+import { Plus, Pencil } from "lucide-react";
 
 interface ProductCardProps {
   product: Product;
   onAddToCart: (product: Product) => void;
+  onEditBarcode?: (product: Product) => void;
 }
 
-export function ProductCard({ product, onAddToCart }: ProductCardProps) {
+export function ProductCard({ product, onAddToCart, onEditBarcode }: ProductCardProps) {
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onEditBarcode?.(product);
+  };
+
   return (
     <button
       onClick={() => onAddToCart(product)}
@@ -18,6 +24,15 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
         "min-h-[140px] text-center"
       )}
     >
+      <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div 
+          onClick={handleEditClick}
+          className="w-7 h-7 rounded-full bg-secondary hover:bg-muted flex items-center justify-center cursor-pointer"
+        >
+          <Pencil className="w-3 h-3 text-muted-foreground" />
+        </div>
+      </div>
+      
       <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
         <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center">
           <Plus className="w-4 h-4 text-primary-foreground" />
@@ -35,6 +50,12 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
       <p className="text-primary font-semibold">
         ${product.price.toFixed(2)}
       </p>
+      
+      {product.barcode && (
+        <p className="text-xs text-muted-foreground mt-1 truncate max-w-full">
+          {product.barcode}
+        </p>
+      )}
     </button>
   );
 }
