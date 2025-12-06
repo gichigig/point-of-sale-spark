@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, ScanBarcode } from "lucide-react";
+import { Plus, ScanBarcode, Camera } from "lucide-react";
 import { categories } from "@/data/products";
+import { BarcodeScanner } from "./BarcodeScanner";
 
 interface AddProductDialogProps {
   open: boolean;
@@ -20,6 +21,7 @@ export function AddProductDialog({ open, onClose, onSave, focusBarcode = false }
   const [category, setCategory] = useState("");
   const [barcode, setBarcode] = useState("");
   const [saving, setSaving] = useState(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
   
   const barcodeInputRef = useRef<HTMLInputElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -85,15 +87,35 @@ export function AddProductDialog({ open, onClose, onSave, focusBarcode = false }
               <ScanBarcode className="w-4 h-4" />
               Barcode
             </Label>
-            <Input
-              id="barcode"
-              ref={barcodeInputRef}
-              placeholder="Scan or enter barcode..."
-              value={barcode}
-              onChange={(e) => setBarcode(e.target.value)}
-              className="bg-secondary border-border/50 font-mono"
-            />
+            <div className="flex gap-2">
+              <Input
+                id="barcode"
+                ref={barcodeInputRef}
+                placeholder="Scan or enter barcode..."
+                value={barcode}
+                onChange={(e) => setBarcode(e.target.value)}
+                className="bg-secondary border-border/50 font-mono flex-1"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => setScannerOpen(true)}
+                title="Scan barcode"
+              >
+                <Camera className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
+
+          <BarcodeScanner
+            open={scannerOpen}
+            onClose={() => setScannerOpen(false)}
+            onScan={(scannedBarcode) => {
+              setBarcode(scannedBarcode);
+              setScannerOpen(false);
+            }}
+          />
 
           <div className="space-y-2">
             <Label htmlFor="name">Product Name *</Label>
