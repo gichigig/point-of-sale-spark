@@ -7,10 +7,11 @@ import { Cart } from "./Cart";
 import { BarcodeScanner } from "./BarcodeScanner";
 import { RemoteScannerDialog } from "./RemoteScannerDialog";
 import { EditBarcodeDialog } from "./EditBarcodeDialog";
+import { AddProductDialog } from "./AddProductDialog";
 import { useScannerSession } from "@/hooks/useScannerSession";
 import { useProducts } from "@/hooks/useProducts";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Clock, User, ScanBarcode, Smartphone } from "lucide-react";
+import { Search, Clock, User, ScanBarcode, Smartphone, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -21,9 +22,11 @@ export function POSLayout() {
   const [scannerOpen, setScannerOpen] = useState(false);
   const [remoteDialogOpen, setRemoteDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [addProductOpen, setAddProductOpen] = useState(false);
+  const [focusBarcodeOnAdd, setFocusBarcodeOnAdd] = useState(false);
   const { toast } = useToast();
   
-  const { products, loading, updateProductBarcode } = useProducts();
+  const { products, loading, updateProductBarcode, addProduct } = useProducts();
 
   const handleBarcodeScan = (barcode: string) => {
     const product = products.find((p) => p.barcode === barcode);
@@ -32,9 +35,21 @@ export function POSLayout() {
     } else {
       toast({
         title: "Product not found",
-        description: `No product found with barcode: ${barcode}`,
+        description: `No product found with barcode: ${barcode}. Would you like to add it?`,
         variant: "destructive",
-        duration: 2000,
+        duration: 3000,
+        action: (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setFocusBarcodeOnAdd(true);
+              setAddProductOpen(true);
+            }}
+          >
+            Add Product
+          </Button>
+        ),
       });
     }
   };
@@ -175,6 +190,15 @@ export function POSLayout() {
                   <span className="ml-1 text-xs">{connectedDevices}</span>
                 )}
               </Button>
+              <Button
+                onClick={() => {
+                  setFocusBarcodeOnAdd(false);
+                  setAddProductOpen(true);
+                }}
+                className="px-4"
+              >
+                <Plus className="w-5 h-5" />
+              </Button>
             </div>
             <CategoryTabs
               categories={categories}
@@ -232,6 +256,16 @@ export function POSLayout() {
         open={!!editingProduct}
         onClose={() => setEditingProduct(null)}
         onSave={updateProductBarcode}
+      />
+
+      <AddProductDialog
+        open={addProductOpen}
+        onClose={() => {
+          setAddProductOpen(false);
+          setFocusBarcodeOnAdd(false);
+        }}
+        onSave={addProduct}
+        focusBarcode={focusBarcodeOnAdd}
       />
     </div>
   );

@@ -71,6 +71,55 @@ export function useProducts() {
     }
   };
 
+  const addProduct = async (product: {
+    name: string;
+    price: number;
+    category: string;
+    barcode?: string;
+  }) => {
+    try {
+      const { data, error } = await supabase
+        .from("products")
+        .insert({
+          name: product.name,
+          price: product.price,
+          category: product.category,
+          barcode: product.barcode || null,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setProducts((prev) => [
+        ...prev,
+        {
+          id: data.id,
+          name: data.name,
+          price: Number(data.price),
+          category: data.category,
+          barcode: data.barcode || undefined,
+          image: data.image || undefined,
+        },
+      ].sort((a, b) => a.name.localeCompare(b.name)));
+
+      toast({
+        title: "Product added",
+        description: `${product.name} has been added`,
+      });
+
+      return true;
+    } catch (error) {
+      console.error("Error adding product:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add product",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
   useEffect(() => {
     fetchProducts();
   }, []);
@@ -79,6 +128,7 @@ export function useProducts() {
     products,
     loading,
     updateProductBarcode,
+    addProduct,
     refetch: fetchProducts,
   };
 }
