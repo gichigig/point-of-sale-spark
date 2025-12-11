@@ -24,11 +24,18 @@ export function POSLayout() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [addProductOpen, setAddProductOpen] = useState(false);
   const [focusBarcodeOnAdd, setFocusBarcodeOnAdd] = useState(false);
+  const [pendingBarcode, setPendingBarcode] = useState<string | undefined>(undefined);
   const { toast } = useToast();
   
   const { products, loading, updateProductBarcode, addProduct } = useProducts();
 
   const handleBarcodeScan = (barcode: string) => {
+    // If add product dialog is open, route scan to fill barcode field
+    if (addProductOpen) {
+      setPendingBarcode(barcode);
+      return;
+    }
+    
     const product = products.find((p) => p.barcode === barcode);
     if (product) {
       addToCart(product);
@@ -43,6 +50,7 @@ export function POSLayout() {
             variant="outline"
             size="sm"
             onClick={() => {
+              setPendingBarcode(barcode);
               setFocusBarcodeOnAdd(true);
               setAddProductOpen(true);
             }}
@@ -263,9 +271,11 @@ export function POSLayout() {
         onClose={() => {
           setAddProductOpen(false);
           setFocusBarcodeOnAdd(false);
+          setPendingBarcode(undefined);
         }}
         onSave={addProduct}
         focusBarcode={focusBarcodeOnAdd}
+        externalBarcode={pendingBarcode}
       />
     </div>
   );
