@@ -13,9 +13,10 @@ interface AddProductDialogProps {
   onClose: () => void;
   onSave: (product: { name: string; price: number; category: string; barcode?: string }) => Promise<boolean>;
   focusBarcode?: boolean;
+  externalBarcode?: string;
 }
 
-export function AddProductDialog({ open, onClose, onSave, focusBarcode = false }: AddProductDialogProps) {
+export function AddProductDialog({ open, onClose, onSave, focusBarcode = false, externalBarcode }: AddProductDialogProps) {
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [category, setCategory] = useState("");
@@ -37,6 +38,13 @@ export function AddProductDialog({ open, onClose, onSave, focusBarcode = false }
       }, 100);
     }
   }, [open, focusBarcode]);
+
+  // Handle external barcode from remote scanner
+  useEffect(() => {
+    if (externalBarcode && open) {
+      setBarcode(externalBarcode);
+    }
+  }, [externalBarcode, open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
