@@ -276,6 +276,7 @@ export function POSLayout() {
         onSave={addProduct}
         focusBarcode={focusBarcodeOnAdd}
         externalBarcode={pendingBarcode}
+        isRemoteScannerConnected={isSessionActive && connectedDevices > 0}
       />
     </div>
   );

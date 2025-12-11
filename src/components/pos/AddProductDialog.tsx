@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, ScanBarcode, Camera } from "lucide-react";
+import { Plus, ScanBarcode, Camera, Smartphone } from "lucide-react";
 import { categories } from "@/data/products";
 import { BarcodeScanner } from "./BarcodeScanner";
 
@@ -14,9 +14,10 @@ interface AddProductDialogProps {
   onSave: (product: { name: string; price: number; category: string; barcode?: string }) => Promise<boolean>;
   focusBarcode?: boolean;
   externalBarcode?: string;
+  isRemoteScannerConnected?: boolean;
 }
 
-export function AddProductDialog({ open, onClose, onSave, focusBarcode = false, externalBarcode }: AddProductDialogProps) {
+export function AddProductDialog({ open, onClose, onSave, focusBarcode = false, externalBarcode, isRemoteScannerConnected = false }: AddProductDialogProps) {
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [category, setCategory] = useState("");
@@ -104,15 +105,22 @@ export function AddProductDialog({ open, onClose, onSave, focusBarcode = false, 
                 onChange={(e) => setBarcode(e.target.value)}
                 className="bg-secondary border-border/50 font-mono flex-1"
               />
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={() => setScannerOpen(true)}
-                title="Scan barcode"
-              >
-                <Camera className="w-4 h-4" />
-              </Button>
+              {isRemoteScannerConnected ? (
+                <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-primary/10 border border-primary/20">
+                  <Smartphone className="w-4 h-4 text-primary animate-pulse" />
+                  <span className="text-xs text-primary">Scan with phone</span>
+                </div>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setScannerOpen(true)}
+                  title="Scan barcode"
+                >
+                  <Camera className="w-4 h-4" />
+                </Button>
+              )}
             </div>
           </div>
 
