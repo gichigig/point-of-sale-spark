@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { Product, CartItem } from "@/types/pos";
 import { categories } from "@/data/products";
 import { CategoryTabs } from "./CategoryTabs";
@@ -10,6 +10,7 @@ import { EditBarcodeDialog } from "./EditBarcodeDialog";
 import { AddProductDialog } from "./AddProductDialog";
 import { useScannerSession } from "@/hooks/useScannerSession";
 import { useProducts } from "@/hooks/useProducts";
+import { useScanSound } from "@/hooks/useScanSound";
 import { useToast } from "@/hooks/use-toast";
 import { Search, Clock, User, ScanBarcode, Smartphone, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -25,11 +26,17 @@ export function POSLayout() {
   const [addProductOpen, setAddProductOpen] = useState(false);
   const [focusBarcodeOnAdd, setFocusBarcodeOnAdd] = useState(false);
   const [pendingBarcode, setPendingBarcode] = useState<string | undefined>(undefined);
+  const [pendingProduct, setPendingProduct] = useState<Product | null>(null);
+  const pendingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
+  const { playClickSound } = useScanSound();
   
   const { products, loading, updateProductBarcode, addProduct } = useProducts();
 
   const handleBarcodeScan = (barcode: string) => {
+    // Play click sound immediately
+    playClickSound();
+    
     // If add product dialog is open, route scan to fill barcode field
     if (addProductOpen) {
       setPendingBarcode(barcode);
@@ -38,7 +45,26 @@ export function POSLayout() {
     
     const product = products.find((p) => p.barcode === barcode);
     if (product) {
-      addToCart(product);
+      // Clear any existing pending timeout
+      if (pendingTimeoutRef.current) {
+        clearTimeout(pendingTimeoutRef.current);
+      }
+      
+      // Set pending product for visual feedback
+      setPendingProduct(product);
+      
+      // Show toast with countdown
+      toast({
+        title: "Item scanned",
+        description: `${product.name} - $${product.price.toFixed(2)} - Adding to cart...`,
+        duration: 3000,
+      });
+      
+      // Add to cart after 3 seconds
+      pendingTimeoutRef.current = setTimeout(() => {
+        addToCart(product);
+        setPendingProduct(null);
+      }, 3000);
     } else {
       toast({
         title: "Product not found",
